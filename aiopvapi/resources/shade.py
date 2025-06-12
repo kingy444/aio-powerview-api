@@ -809,7 +809,7 @@ class ShadeBottomUpTiltAnywhere(BaseShadeTilt):
         """Initialize shade with tilt anywhere."""
         super().__init__(raw_data, shade_type, request)
         self._open_position = ShadePosition(primary=MAX_POSITION, tilt=MAX_POSITION)
-        self._close_position = ShadePosition(primary=MIN_POSITION, tilt=MAX_POSITION)
+        self._close_position = ShadePosition(primary=MIN_POSITION, tilt=MIN_POSITION)
         self._open_position_tilt = ShadePosition(tilt=MAX_POSITION)
         self._close_position_tilt = ShadePosition(tilt=MIN_POSITION)
         if self.api_version < 3:
