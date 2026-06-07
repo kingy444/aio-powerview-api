@@ -60,8 +60,8 @@ class Automation(ApiResource):
         return self._raw_data.get(ATTR_SCENE_ID)
 
     @property
-    def room_id(self) -> int | None:
-        """Return the room id of the automation."""
+    def room_id(self) -> list[int] | None:
+        """Return the room id(s) of the automation."""
         return self._room_id
 
     def convert_to_12_hour(self, hour: int):

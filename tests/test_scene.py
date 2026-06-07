@@ -40,7 +40,7 @@ class TestScene(TestApiResource):
         self.assertEqual("Dining Vanes Open", self.resource.name)
 
     def test_room_id_property(self):
-        self.assertEqual(26756, self.resource.room_id)
+        self.assertEqual([26756], self.resource.room_id)
 
     def test_shade_ids_v2_returns_empty(self):
         self.assertEqual([], self.resource.shade_ids)

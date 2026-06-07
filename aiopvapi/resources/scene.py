@@ -35,11 +35,11 @@ class Scene(ApiResource):
         return []
 
     @property
-    def room_id(self):
-        """Return the room id."""
+    def room_id(self) -> list[int]:
+        """Return the id of room(s) associated with this scene."""
         if self.api_version >= 3:
-            return self._raw_data.get(ATTR_ROOM_IDS)[0]
-        return self._raw_data.get(ATTR_ROOM_ID)
+            return self._raw_data.get(ATTR_ROOM_IDS, [])
+        return [self._raw_data.get(ATTR_ROOM_ID)]
 
     async def activate(self) -> list[int]:
         """Activate this scene."""
