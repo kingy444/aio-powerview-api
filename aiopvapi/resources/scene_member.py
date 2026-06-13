@@ -1,8 +1,12 @@
 """Class for managing scene members."""
 
+import logging
+
 from aiopvapi.helpers.aiorequest import AioRequest
 from aiopvapi.helpers.api_base import ApiResource
 from aiopvapi.helpers.constants import ATTR_SCENE_ID, ATTR_SCENE_MEMBER, ATTR_SHADE_ID
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SceneMember(ApiResource):
@@ -15,6 +19,7 @@ class SceneMember(ApiResource):
         if ATTR_SCENE_MEMBER in raw_data:
             raw_data = raw_data.get(ATTR_SCENE_MEMBER)
         super().__init__(request, self.api_endpoint, raw_data)
+        self._id = "unknown" if raw_data is None else raw_data.get(ATTR_SCENE_ID)
 
     @property
     def scene_id(self) -> str:

@@ -2,6 +2,7 @@
 
 import logging
 
+from aiopvapi.resources.scene_member import SceneMember
 from aiopvapi.helpers.aiorequest import AioRequest
 from aiopvapi.helpers.api_base import ApiResource
 from aiopvapi.helpers.constants import (
@@ -21,25 +22,44 @@ class Scene(ApiResource):
 
     api_endpoint = "scenes"
 
-    def __init__(self, raw_data: dict, request: AioRequest) -> None:
+    def __init__(
+        self,
+        raw_data: dict,
+        request: AioRequest,
+        scene_members: dict[SceneMember] | None = None,
+    ) -> None:
         """Initialize the scene."""
         if ATTR_SCENE in raw_data:
             raw_data = raw_data.get(ATTR_SCENE)
         super().__init__(request, self.api_endpoint, raw_data)
+        # For v2: pre-filter scene members belonging to this scene and
+        # store shade ids here since v2 doesn't return shade ids in the scene data
+        self._scene_members = scene_members
 
     @property
     def shade_ids(self) -> list[int]:
-        """Return shade ids for gen3 hubs, empty list otherwise."""
+        """Return shade ids for the scene."""
         if self.api_version >= 3:
             return self._raw_data.get(ATTR_SHADE_IDS, [])
-        return []
+
+        # account for creation of object with no scene members data
+        # (e.g. when creating a new scene and not passing the object)
+        if not self._scene_members:
+            return []
+
+        # For v2, need to filter the scene members data to find shade ids for this scene
+        return [
+            member.shade_id
+            for member in self._scene_members.values()
+            if member.scene_id == self.id
+        ]
 
     @property
-    def room_id(self):
-        """Return the room id."""
+    def room_id(self) -> list[int]:
+        """Return the id of room(s) associated with this scene."""
         if self.api_version >= 3:
-            return self._raw_data.get(ATTR_ROOM_IDS)[0]
-        return self._raw_data.get(ATTR_ROOM_ID)
+            return self._raw_data.get(ATTR_ROOM_IDS, [])
+        return [self._raw_data.get(ATTR_ROOM_ID)]
 
     async def activate(self) -> list[int]:
         """Activate this scene."""

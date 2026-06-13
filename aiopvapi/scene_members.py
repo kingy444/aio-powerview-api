@@ -14,7 +14,7 @@ from aiopvapi.helpers.constants import (
 from aiopvapi.resources.model import PowerviewData
 from aiopvapi.resources.scene_member import ATTR_SCENE_MEMBER, SceneMember
 
-_LOGGER = logging.getLogger("__name__")
+_LOGGER = logging.getLogger(__name__)
 
 
 class SceneMembers(ApiEntryPoint):
@@ -51,11 +51,6 @@ class SceneMembers(ApiEntryPoint):
         if self.api_version >= 3:
             return raw
         return raw.get(SCENE_MEMBER_DATA)
-
-    async def get_scene_members_old(self, scene_id):
-        """Return all scene members for a particular Scene ID."""
-
-        return await self.get_instances(sceneId=scene_id)
 
     async def delete_shade_from_scene(self, shade_id, scene_id):
         """Delete a shade from a scene."""
