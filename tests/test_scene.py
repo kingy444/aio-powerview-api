@@ -1,127 +1,166 @@
-import asyncio
-from aiohttp import ClientResponse
-from unittest.mock import Mock
+"""Test Scene capabilities."""
+
+from unittest.mock import AsyncMock, Mock
 
 from aiopvapi.helpers.aiorequest import AioRequest, PvApiResponseStatusError
 from aiopvapi.resources.scene import Scene
+import pytest
 
-from tests.fake_server import FAKE_BASE_URL
-from tests.test_apiresource import TestApiResource
-from tests.test_scene_members import AsyncMock
+import base64
 
-
-SCENE_RAW_DATA = {
-    "roomId": 26756,
-    "name": "RGluaW5nIFZhbmVzIE9wZW4=",  # "Dining Vanes Open"
-    "colorId": 0,
-    "iconId": 0,
-    "id": 37217,
-    "order": 1,
-}
+from .common import FAKE_BASE_URL, SCENE_RAW_DATA_V1_V2, SCENE_RAW_DATA_V3, scenes_json
 
 
-class TestScene(TestApiResource):
-    def get_resource_raw_data(self):
-        return SCENE_RAW_DATA
+def decode_name(value: str) -> str:
+    """Decode base64 encoded name."""
+    return base64.b64decode(value).decode("utf-8")
 
-    def get_resource_uri(self):
-        return "http://{}/api/scenes/37217".format(FAKE_BASE_URL)
 
-    def get_resource(self):
-        _request = Mock(spec=AioRequest)
-        _request.hub_ip = FAKE_BASE_URL
-        _request.api_version = 2
-        _request.api_path = "api"
-        return Scene(SCENE_RAW_DATA, _request)
+@pytest.fixture
+def make_request():
+    """Return a factory that builds a mock AioRequest for a given API version."""
 
-    def test_name_property(self):
-        # No name_unicode, although name is base64 encoded
-        # thus base64 decoded is returned
-        self.assertEqual("Dining Vanes Open", self.resource.name)
+    def _make_request(api_version: int) -> Mock:
+        request = Mock(spec=AioRequest)
+        request.hub_ip = FAKE_BASE_URL
+        request.api_version = api_version
+        request.api_path = "home" if api_version >= 3 else "api"
+        return request
 
-    def test_room_id_property(self):
-        self.assertEqual(26756, self.resource.room_id)
+    return _make_request
 
-    def test_shade_ids_v2_returns_empty(self):
-        self.assertEqual([], self.resource.shade_ids)
 
-    def test_shade_ids_v3_returns_ids(self):
-        _request = Mock(spec=AioRequest)
-        _request.hub_ip = FAKE_BASE_URL
-        _request.api_version = 3
-        _request.api_path = "api"
-        raw_data = {**SCENE_RAW_DATA, "shadeIds": [1, 2, 3]}
-        scene = Scene(raw_data, _request)
-        self.assertEqual([1, 2, 3], scene.shade_ids)
+@pytest.fixture
+def make_scene(make_request):
+    """Return a factory that builds a Scene for a given API version."""
 
-    def test_shade_ids_v3_missing_returns_empty(self):
-        _request = Mock(spec=AioRequest)
-        _request.hub_ip = FAKE_BASE_URL
-        _request.api_version = 3
-        _request.api_path = "api"
-        scene = Scene(SCENE_RAW_DATA, _request)
-        self.assertEqual([], scene.shade_ids)
+    def _make_scene(api_version: int, raw_data: dict | None = None) -> Scene:
+        if raw_data is None:
+            raw_data = SCENE_RAW_DATA_V3 if api_version >= 3 else SCENE_RAW_DATA_V1_V2
 
-    def test_full_path(self):
-        self.assertEqual(
-            self.resource.base_path,
-            "http://{}/api/scenes".format(FAKE_BASE_URL),
-        )
+        return Scene(raw_data, make_request(api_version))
 
-    def test_activate_200(self):
-        """Test scene activation"""
+    return _make_scene
 
-        async def go():
-            await self.start_fake_server()
-            scene = self.get_resource()
-            scene.request.get = AsyncMock(return_value={'shadeIds': [10]})
-            resp = await scene.activate()
-            return resp
 
-        resp = self.loop.run_until_complete(go())
-        self.assertEqual(resp[0], 10)
+@pytest.fixture
+def make_scenes(make_scene):
+    """Return a factory that builds all Scene objects for a given API version."""
 
-    def test_activate_404(self):
-        """Test scene activation"""
+    def _make_scenes(api_version: int) -> list[Scene]:
+        data = scenes_json(api_version)
 
-        async def go():
-            await self.start_fake_server()
-            # scene = self.get_resource()
+        if api_version >= 3:
+            raw_scenes = data
+        else:
+            raw_scenes = data["sceneData"]
 
-            loop = asyncio.new_event_loop()
-            request = AioRequest(FAKE_BASE_URL, loop, api_version=2)
+        return [make_scene(api_version, raw_scene) for raw_scene in raw_scenes]
 
-            response = Mock(spec=ClientResponse)
-            response.status = 404
-            response.release = AsyncMock(return_value=None)
-            request.websession.get = AsyncMock(return_value=response)
+    return _make_scenes
 
-            scene = Scene(SCENE_RAW_DATA, request)
-            scene._resource_path += "1"
 
-            resp = await scene.activate()
-            return resp
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_scene_count(api_version: int, make_scenes) -> None:
+    """Test that expected number of scenes are returned for each API version."""
+    scenes = make_scenes(api_version)
 
-        with self.assertRaises(PvApiResponseStatusError):
-            resp = self.loop.run_until_complete(go())
+    assert len(scenes) == 18
 
-    # @aioresponses()
-    # def test_activate_200(self, mocked):
-    #     mocked.get('http://127.0.0.1/api/scenes',
-    #                body='"ok"',
-    #                status=200,
-    #                headers={'content-type': 'application/json'})
-    #     resp = self.loop.run_until_complete(self.resource.activate())
-    #     self.assertEqual('ok', resp)
-    #     request = mocked.requests[('GET', 'http://127.0.0.1/api/scenes')][-1]
-    #     self.assertEqual({'sceneId': 37217}, request.kwargs['params'])
-    #
-    # @aioresponses()
-    # def test_activate_201(self, mocked):
-    #     """Test scene activation with wrong status."""
-    #     mocked.get('http://127.0.0.1/api/scenes',
-    #                body='"ok"',
-    #                status=201,
-    #                headers={'content-type': 'application/json'})
-    #     with self.assertRaises(PvApiResponseStatusError):
-    #         resp = self.loop.run_until_complete(self.resource.activate())
+
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_scene_exists(api_version: int, make_scenes) -> None:
+    """Test that specific scenes exist across API versions."""
+    scenes = make_scenes(api_version)
+
+    names = [scene.name for scene in scenes]
+    assert "Open Study" in names
+
+
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_name_property(api_version: int, make_scenes) -> None:
+    """Test that all scene names are correctly resolved."""
+    scenes = make_scenes(api_version)
+
+    for scene in scenes:
+        raw = scene.raw_data
+
+        if api_version >= 3:
+            expected = raw["ptName"]
+        else:
+            expected = decode_name(raw["name"])
+
+        assert scene.name == expected
+
+
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_room_id_property(api_version: int, make_scenes) -> None:
+    """Test that scene room_id property returns correct value."""
+    scenes = make_scenes(api_version)
+
+    room_ids = [room_id for scene in scenes for room_id in scene.room_id]
+
+    if api_version >= 3:
+        expected = 298
+    else:
+        expected = 24002
+
+    assert expected in room_ids
+
+
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_full_path(api_version: int, make_scene) -> None:
+    """Test that scene base_path is correctly constructed."""
+    scene = make_scene(api_version)
+
+    assert scene.base_path == f"http://{FAKE_BASE_URL}/{scene.request.api_path}/scenes"
+
+
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+def test_return_empty(api_version: int, make_scene) -> None:
+    """Test that scene returns empty shade_ids."""
+    scene = make_scene(api_version)
+
+    assert scene.shade_ids == []
+
+
+@pytest.mark.parametrize("api_version", [3])
+def test_return_shade_ids(api_version: int, make_scene) -> None:
+    """Test that API v3 scene returns shade_ids from raw data."""
+    raw_data = {**SCENE_RAW_DATA_V3, "shadeIds": [1, 2, 3]}
+    scene = make_scene(api_version, raw_data=raw_data)
+
+    assert scene.shade_ids == [1, 2, 3]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+async def test_activate_200(api_version: int, make_scene) -> None:
+    """Test successful scene activation for supported API versions."""
+    scene = make_scene(api_version)
+
+    if api_version >= 3:
+        scene.request.put = AsyncMock(return_value=[10])
+    else:
+        scene.request.get = AsyncMock(return_value={"shadeIds": [10]})
+
+    resp = await scene.activate()
+
+    assert resp[0] == 10
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("api_version", [1, 2, 3])
+async def test_activate_404(api_version: int, make_scene) -> None:
+    """Test scene activation failure raises PvApiResponseStatusError."""
+    scene = make_scene(api_version)
+
+    error = PvApiResponseStatusError("404 Not Found")
+
+    if api_version == 3:
+        scene.request.put = Mock(side_effect=error)
+    else:
+        scene.request.get = Mock(side_effect=error)
+
+    with pytest.raises(PvApiResponseStatusError):
+        await scene.activate()
