@@ -2,6 +2,7 @@
 
 import logging
 
+from aiopvapi.scene_members import SceneMembers
 from aiopvapi.helpers.aiorequest import AioRequest
 from aiopvapi.helpers.api_base import ApiEntryPoint
 from aiopvapi.helpers.constants import (
@@ -11,10 +12,14 @@ from aiopvapi.helpers.constants import (
     ATTR_NAME,
     ATTR_ROOM_ID,
     ATTR_SCENE_DATA,
+    ATTR_SCENE_ID,
+    ATTR_SHADE_ID,
+    SCENE_MEMBER_DATA,
 )
 from aiopvapi.helpers.tools import unicode_to_base64
 from aiopvapi.resources.model import PowerviewData
 from aiopvapi.resources.scene import Scene
+from aiopvapi.resources.scene_member import SceneMember
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +39,7 @@ class Scenes(ApiEntryPoint):
     def _loop_raw(self, raw):
         if self.api_version < 3:
             raw = raw[ATTR_SCENE_DATA]
-
+        _LOGGER.debug("Looping raw scenes data: %s", raw)
         yield from raw
 
     def _get_to_actual_data(self, raw):
@@ -42,29 +47,31 @@ class Scenes(ApiEntryPoint):
             return raw
         return raw.get("scene")
 
-    async def get_scenes_old(self) -> dict:
-        """Get a list of scenes.
-
-        :raises PvApiError when an error occurs.
-        """
-        resources = await self.get_resources()
-        if self.api_version < 3:
-            return resources[ATTR_SCENE_DATA]
-        return resources
-
     async def get_scenes(self, **kwargs) -> PowerviewData:
         """Get a list of scenes.
 
         :raises PvApiError when an error occurs.
         """
+
         resources = await self.get_resources(**kwargs)
+        # v2 only: fetch scene members and pass to Scene constructor
+        scenemembers = None
         if self.api_version < 3:
             resources = resources[ATTR_SCENE_DATA]
+            scene_members_ep = SceneMembers(self.request)
+            members_data = await scene_members_ep.get_scene_members()
+            scenemembers = members_data.processed
 
         _LOGGER.debug("Raw scenes data: %s", resources)
 
-        # return array of scenes attached to a shade
-        processed = {entry[ATTR_ID]: Scene(entry, self.request) for entry in resources}
+        processed = {
+            entry[ATTR_ID]: Scene(
+                entry,
+                self.request,
+                scenemembers
+            )
+            for entry in resources
+        }
 
         return PowerviewData(raw=resources, processed=processed)
 

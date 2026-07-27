@@ -8,6 +8,7 @@ from aiopvapi.hub import Hub
 from aiopvapi.resources.automation import Automation
 from aiopvapi.resources.room import Room
 from aiopvapi.resources.scene import Scene
+from aiopvapi.resources.scene_member import SceneMember
 from aiopvapi.resources.shade import BaseShade
 
 
@@ -21,4 +22,4 @@ class PowerviewData:
     """
 
     raw: Iterable[dict[str | int, Any]]
-    processed: dict[str, BaseShade | Hub | Automation | Scene | Room]
+    processed: dict[str, BaseShade | Hub | Automation | Scene | Room | SceneMember]
