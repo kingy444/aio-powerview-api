@@ -12,6 +12,7 @@ from aiopvapi.helpers.constants import (
     SCENE_MEMBER_DATA,
 )
 from aiopvapi.resources.model import PowerviewData
+from aiopvapi.resources.scene import Scene
 from aiopvapi.resources.scene_member import ATTR_SCENE_MEMBER, SceneMember
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,3 +76,34 @@ class SceneMembers(ApiEntryPoint):
         }
 
         return PowerviewData(raw=resources, processed=processed)
+
+
+def build_shade_scene_mapping(
+    scene_data: PowerviewData,
+    scene_member_data: PowerviewData | None = None,
+) -> tuple[dict[int, list[int]], dict[int, list[int]]]:
+    """Build bidirectional shade↔scene ID mappings.
+
+    Pass scene_member_data for gen2 hubs (from SceneMembers.get_scene_members()).
+    For gen3, shadeIds are embedded in scene data and scene_member_data is not needed.
+
+    Returns (scene_to_shade_ids, shade_to_scene_ids).
+    """
+    scene_to_shade_ids: dict[int, list[int]] = {}
+    shade_to_scene_ids: dict[int, list[int]] = {}
+
+    if scene_member_data is not None:
+        for member in scene_member_data.raw:
+            s_id = member["sceneId"]
+            sh_id = member["shadeId"]
+            scene_to_shade_ids.setdefault(s_id, []).append(sh_id)
+            shade_to_scene_ids.setdefault(sh_id, []).append(s_id)
+    else:
+        for scene in scene_data.processed.values():
+            if not isinstance(scene, Scene):
+                continue
+            for sh_id in scene.shade_ids:
+                scene_to_shade_ids.setdefault(scene.id, []).append(sh_id)
+                shade_to_scene_ids.setdefault(sh_id, []).append(scene.id)
+
+    return scene_to_shade_ids, shade_to_scene_ids
