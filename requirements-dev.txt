@@ -2,6 +2,7 @@ twine
 pre-commit
 pytest
 nox
+pytest-asyncio
 pytest-cov
 python-coveralls
 wheel
