@@ -2,29 +2,52 @@ name: CI
 
 on:
   push:
-    branches: master
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
 
 jobs:
   test:
     name: test w/ Python ${{ matrix.python-version }}
-
     runs-on: windows-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install nox
-      - run: nox --session tests-${{ matrix.python-version }}
+
+      - name: Install nox
+        run: python -m pip install --upgrade pip nox
+
+      - name: Run tests
+        run: nox --session tests-${{ matrix.python-version }}
         env:
-          PYTHONDEVMODE: 1
-      - uses: codecov/codecov-action@v1
-        if: always()
+          PYTHONDEVMODE: "1"
+
+      - name: Upload coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./cov.xml
+          files: ./cov.xml
+          flags: python-${{ matrix.python-version }}
+          name: python-${{ matrix.python-version }}
+          fail_ci_if_error: true
+          verbose: true
