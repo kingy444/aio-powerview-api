@@ -28,11 +28,18 @@ class Scene(ApiResource):
         super().__init__(request, self.api_endpoint, raw_data)
 
     @property
-    def room_id(self):
-        """Return the room id."""
+    def shade_ids(self) -> list[int]:
+        """Return shade ids for gen3 hubs, empty list otherwise."""
         if self.api_version >= 3:
-            return self._raw_data.get(ATTR_ROOM_IDS)[0]
-        return self._raw_data.get(ATTR_ROOM_ID)
+            return self._raw_data.get(ATTR_SHADE_IDS, [])
+        return []
+
+    @property
+    def room_id(self) -> list[int]:
+        """Return the id of room(s) associated with this scene."""
+        if self.api_version >= 3:
+            return self._raw_data.get(ATTR_ROOM_IDS, [])
+        return [self._raw_data.get(ATTR_ROOM_ID)]
 
     async def activate(self) -> list[int]:
         """Activate this scene."""
