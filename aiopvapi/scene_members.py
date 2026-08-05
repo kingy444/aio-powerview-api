@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 class SceneMembers(ApiEntryPoint):
     """A scene member is a device, like a shade, being a member of a specific scene."""
 
-    api_endpoint = "sceneMembers"
+    api_endpoint = "scenemembers"
 
     def __init__(self, request: AioRequest) -> None:
         """Initialize SceneMembers."""
