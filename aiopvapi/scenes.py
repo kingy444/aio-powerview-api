@@ -56,7 +56,7 @@ class Scenes(ApiEntryPoint):
         resources = await self.get_resources(**kwargs)
         # v2 only: fetch scene members and pass to Scene constructor
         scenemembers = None
-        if self.api_version < 3:
+        if self.api_version == 2:
             resources = resources[ATTR_SCENE_DATA]
             scene_members_ep = SceneMembers(self.request)
             members_data = await scene_members_ep.get_scene_members()
