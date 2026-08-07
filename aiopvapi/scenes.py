@@ -56,8 +56,10 @@ class Scenes(ApiEntryPoint):
         resources = await self.get_resources(**kwargs)
         # v2 only: fetch scene members and pass to Scene constructor
         scenemembers = None
-        if self.api_version == 2:
+        if self.api_version < 3:
             resources = resources[ATTR_SCENE_DATA]
+
+        if self.api_version == 2:  # gen2 does not have a scenemembers endpoint
             scene_members_ep = SceneMembers(self.request)
             members_data = await scene_members_ep.get_scene_members()
             scenemembers = members_data.processed
@@ -65,11 +67,7 @@ class Scenes(ApiEntryPoint):
         _LOGGER.debug("Raw scenes data: %s", resources)
 
         processed = {
-            entry[ATTR_ID]: Scene(
-                entry,
-                self.request,
-                scenemembers
-            )
+            entry[ATTR_ID]: Scene(entry, self.request, scenemembers)
             for entry in resources
         }
 
