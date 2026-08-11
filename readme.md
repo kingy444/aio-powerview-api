@@ -93,6 +93,7 @@ Shades not listed will get their features from their **capabilities**, unfortuna
 ### v3.4.1
 - Correct erroneous naming in function naming
 - Handle empty responses from gen 1 hubs
+- Handle scenemembers api endpoint case sensitive
 
 ### v3.4.0
 - BREAKING CHANGE: Update SceneMembers api to use Scene ID as index over Shade ID

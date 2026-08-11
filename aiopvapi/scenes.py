@@ -58,8 +58,6 @@ class Scenes(ApiEntryPoint):
         scenemembers = None
         if self.api_version < 3:
             resources = resources[ATTR_SCENE_DATA]
-
-        if self.api_version == 2:  # gen2 does not have a scenemembers endpoint
             scene_members_ep = SceneMembers(self.request)
             members_data = await scene_members_ep.get_scene_members()
             scenemembers = members_data.processed

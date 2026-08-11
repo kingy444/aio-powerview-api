@@ -66,9 +66,6 @@ class SceneMembers(ApiEntryPoint):
         :raises PvApiError when an error occurs.
         """
 
-        if self.api_version == 1:  # gen1 does not have a scenemembers endpoint
-            return PowerviewData(raw={}, processed=None)
-
         resources = await self.get_resources(**kwargs)
         if self.api_version < 3:
             resources = resources[SCENE_MEMBER_DATA]
