@@ -18,7 +18,7 @@ Changelog
 - Correct erroneous naming in function naming
 - Handle empty responses from gen 1 hubs
 - Handle scenemembers api endpoint case sensitive
-- Update automation primary ket to eventid
+- Update automation primary key to eventid
 
 **v3.4.0**
 - BREAKING CHANGE: Update SceneMembers api to use Scene ID as index over Shade ID
