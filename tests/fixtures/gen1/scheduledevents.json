@@ -6,7 +6,7 @@
   "scheduledEventData": [
     {
       "enabled": false,
-      "sceneId": 59968,
+      "sceneId": 48243,
       "daySunday": false,
       "dayMonday": true,
       "dayTuesday": true,
@@ -36,7 +36,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 25458,
+      "sceneId": 46225,
       "daySunday": true,
       "dayMonday": true,
       "dayTuesday": true,
@@ -51,7 +51,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 49070,
+      "sceneId": 19831,
       "daySunday": false,
       "dayMonday": false,
       "dayTuesday": false,
@@ -96,7 +96,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 14067,
+      "sceneId": 20625,
       "daySunday": false,
       "dayMonday": true,
       "dayTuesday": true,
@@ -111,7 +111,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 19525,
+      "sceneId": 54636,
       "daySunday": true,
       "dayMonday": true,
       "dayTuesday": true,
@@ -126,7 +126,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 3455,
+      "sceneId": 43508,
       "daySunday": true,
       "dayMonday": false,
       "dayTuesday": false,
@@ -141,7 +141,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 59968,
+      "sceneId": 48243,
       "daySunday": true,
       "dayMonday": false,
       "dayTuesday": false,
@@ -156,7 +156,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 59968,
+      "sceneId": 48243,
       "daySunday": false,
       "dayMonday": false,
       "dayTuesday": false,
@@ -171,7 +171,7 @@
     },
     {
       "enabled": false,
-      "sceneId": 36482,
+      "sceneId": 59372,
       "daySunday": true,
       "dayMonday": true,
       "dayTuesday": true,
