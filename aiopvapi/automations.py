@@ -26,7 +26,7 @@ class Automations(ApiEntryPoint):
 
     def _loop_raw(self, raw):
         if self.api_version < 3:
-            raw = raw.get(ATTR_SCHEDULED_EVENT_DATA,{})
+            raw = raw[ATTR_SCHEDULED_EVENT_DATA]
 
         yield from raw
 
@@ -45,7 +45,7 @@ class Automations(ApiEntryPoint):
         """
         resources = await self.get_resources(**kwargs)
         if self.api_version < 3:
-            resources = resources.get(ATTR_SCHEDULED_EVENT_DATA, {})
+            resources = resources[ATTR_SCHEDULED_EVENT_DATA]
 
         _LOGGER.debug("Raw automation data: %s", resources)
 
